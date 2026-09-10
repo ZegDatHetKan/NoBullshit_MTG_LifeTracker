@@ -27,8 +27,9 @@ could not phone home even if it wanted to.
   out of that half and marks it. Life can come back, so nothing is ever blocked.
 - **Undo**, one log entry at a time.
 - **Game history** — every change, newest first, with who and how much.
-- **Dice and coin** — d20, coin flip, and a random first player. The result is drawn
-  twice, once flipped, so both players read it without leaning over the table.
+- **Dice and coin** — d20, coin flip, and a random first player. The result is shown
+  once, at a size that carries across the table, and shrinks to fit whatever it has to
+  say. A 6 or a 9 is underlined, so it cannot be read as the other one from the far seat.
 - **New game** behind a confirmation that says exactly what it will clear.
 - **Starting life** 20, 40, 25, or anything you type.
 - **Names and colours** per player, in the five Magic colours plus multicolour.
@@ -63,13 +64,24 @@ Compose, and kotlinx.serialization.
 Needs a JDK 17 and the Android SDK (platform 35). Gradle arrives via the wrapper.
 
 ```bash
-git clone git@github.com:ZegDatHetKan/MTG_LifeTracker.git
-cd MTG_LifeTracker
+git clone git@github.com:ZegDatHetKan/NoBullshit_MTG_LifeTracker.git
+cd NoBullshit_MTG_LifeTracker
 echo "sdk.dir=$HOME/Android/Sdk" > local.properties   # or let Android Studio write it
 
 ./gradlew assembleDebug        # -> app/build/outputs/apk/debug/app-debug.apk
 ./gradlew testDebugUnitTest    # rules tests
 ```
+
+For a release build (minified and resource-shrunk):
+
+```bash
+./gradlew assembleRelease      # -> app/build/outputs/apk/release/app-release-unsigned.apk
+```
+
+That APK is **unsigned**, so Android will refuse to install it as it stands. Sign it with
+your own key before installing or distributing it — Android Studio's
+*Build > Generate Signed App Bundle / APK*, or `apksigner` from the build tools. No signing
+key lives in this repository, and none ever should.
 
 Install it on a plugged-in phone with USB debugging on:
 

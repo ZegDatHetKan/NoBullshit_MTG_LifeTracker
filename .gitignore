@@ -12,5 +12,8 @@ captures/
 *.aab
 *.keystore
 !debug.keystore
+.kotlin/
 
 # Local SDK/JDK paths must never be committed; each machine writes its own.
+# Signing credentials belong here too, never in the tree.
+keystore.properties
