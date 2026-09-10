@@ -6,7 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,7 +24,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -35,6 +33,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
+import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.contentDescription
@@ -47,9 +47,6 @@ import com.nobs.mtglifetracker.model.CounterType
 import com.nobs.mtglifetracker.model.PlayerState
 import com.nobs.mtglifetracker.ui.theme.LocalIsDark
 import com.nobs.mtglifetracker.ui.theme.paletteFor
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 
 /**
  * One player's half of the table. The whole surface is the control: the left half
@@ -224,6 +221,11 @@ private fun LifeSurface(
 /**
  * Half of the panel. A press fires immediately, then repeats after a short hold and
  * speeds up, so large swings don't mean forty taps.
+ *
+ * The repeat is driven from inside the gesture rather than by a job launched alongside it.
+ * A job on the composition scope outlives a cancelled gesture, and rapid tapping cancels
+ * gestures often — one orphan is then stepping the total 26 times a second for the rest of
+ * the game, with nothing left holding a handle to stop it.
  */
 @Composable
 private fun RowScope.LifeTapZone(
@@ -233,7 +235,6 @@ private fun RowScope.LifeTapZone(
     haptics: Boolean,
     onStep: () -> Unit,
 ) {
-    val scope = rememberCoroutineScope()
     val view = LocalView.current
     val currentStep by rememberUpdatedState(onStep)
     val currentHaptics by rememberUpdatedState(haptics)
@@ -247,28 +248,35 @@ private fun RowScope.LifeTapZone(
             .semantics { contentDescription = description }
             .pointerInput(Unit) {
                 awaitEachGesture {
-                    awaitFirstDown(requireUnconsumed = false)
-                    pressed = true
+                    val down = awaitFirstDown(requireUnconsumed = false)
                     val fire = {
                         if (currentHaptics) {
                             view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                         }
                         currentStep()
                     }
-                    fire()
-                    val repeat = scope.launch {
-                        delay(HOLD_BEFORE_REPEAT_MS)
+                    pressed = true
+                    // However this gesture ends — lifted, cancelled, torn down mid-hold —
+                    // the repeat ends with it and the highlight always clears.
+                    try {
+                        fire()
+                        var wait = HOLD_BEFORE_REPEAT_MS
                         var interval = REPEAT_START_MS
-                        while (isActive) {
+                        // AwaitPointerEventScope's own withTimeoutOrNull, not the
+                        // kotlinx one: it times out by resuming the pending
+                        // awaitPointerEvent instead of cancelling a child coroutine
+                        // out from under the pointer handler.
+                        // Null means the wait ran out with the finger still down, so
+                        // repeat. Anything else means the press is over.
+                        while (withTimeoutOrNull(wait) { awaitRelease(down.id) } == null) {
                             fire()
-                            delay(interval)
+                            wait = interval
                             interval = (interval - REPEAT_ACCELERATION_MS)
                                 .coerceAtLeast(REPEAT_MIN_MS)
                         }
+                    } finally {
+                        pressed = false
                     }
-                    waitForUpOrCancellation()
-                    repeat.cancel()
-                    pressed = false
                 }
             },
         contentAlignment = alignment,
@@ -280,6 +288,19 @@ private fun RowScope.LifeTapZone(
             color = Color.White.copy(alpha = 0.5f),
             modifier = Modifier.padding(horizontal = 24.dp),
         )
+    }
+}
+
+/**
+ * Waits for one specific pointer to leave. Following the id matters when a second finger
+ * lands in the same half: `waitForUpOrCancellation` ends the press on whichever pointer
+ * departs first, which strands the finger that is still holding.
+ */
+private suspend fun AwaitPointerEventScope.awaitRelease(pointer: PointerId) {
+    while (true) {
+        val change = awaitPointerEvent().changes.firstOrNull { it.id == pointer }
+        // Gone from the stream, lifted, or claimed by a parent: the press is over.
+        if (change == null || !change.pressed || change.isConsumed) return
     }
 }
 
