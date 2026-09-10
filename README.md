@@ -38,6 +38,44 @@ could not phone home even if it wanted to.
   and both totals, counters and history are exactly where you left them.
 - Light and dark themes, haptics, and full TalkBack labelling.
 
+## Install it
+
+Download **[nobs-mtg-lifetracker-1.0.apk](https://github.com/ZegDatHetKan/NoBullshit_MTG_LifeTracker/raw/main/dist/nobs-mtg-lifetracker-1.0.apk)**
+(1.2 MB) straight onto your phone and tap it.
+
+Android will say it came from an unknown source, because it did not come from the Play
+Store. It asks once for permission to install from whatever app you downloaded it with —
+your browser or file manager — and that permission is per-app and revocable afterwards:
+*Settings > Apps > Special app access > Install unknown apps*.
+
+Needs Android 8.0 (API 26) or newer. Nothing else — no account, and no network permission,
+so it works fine in aeroplane mode forever.
+
+To update later, download the newer APK and install it over the top; your game is kept.
+
+<details>
+<summary>Checking you got the real thing</summary>
+
+The APK is signed with a key that never leaves the maintainer's machine, so any build
+carrying this signature was built from it:
+
+```bash
+$ANDROID_HOME/build-tools/35.0.0/apksigner verify --print-certs nobs-mtg-lifetracker-1.0.apk
+```
+
+```
+Signer #1 certificate DN: CN=NoBullshit MTG LifeTracker, OU=ZegDatHetKan, O=ZegDatHetKan
+Signer #1 certificate SHA-256 digest: 2ec276fc7eb62ddc4ccbf0b1e34ec11354615a0288b7aa8dfac0e451e22d559b
+```
+
+And the file itself:
+
+```
+SHA-256  c9e732ad2deae2c79a1d87ac579fbf11a10be6f5d5e2b9824c2853befd2e9b43
+```
+
+</details>
+
 ## The "no bullshit" part is checkable
 
 The claim is structural, not a promise in a privacy policy. `AndroidManifest.xml`
@@ -75,13 +113,21 @@ echo "sdk.dir=$HOME/Android/Sdk" > local.properties   # or let Android Studio wr
 For a release build (minified and resource-shrunk):
 
 ```bash
-./gradlew assembleRelease      # -> app/build/outputs/apk/release/app-release-unsigned.apk
+./gradlew assembleRelease      # -> app/build/outputs/apk/release/app-release.apk
 ```
 
-That APK is **unsigned**, so Android will refuse to install it as it stands. Sign it with
-your own key before installing or distributing it — Android Studio's
-*Build > Generate Signed App Bundle / APK*, or `apksigner` from the build tools. No signing
-key lives in this repository, and none ever should.
+No signing key lives in this repository, and none ever should. Without one that command
+still assembles a release build, just unsigned — which Android will refuse to install. To
+sign your own, drop a `keystore.properties` next to `settings.gradle.kts`:
+
+```properties
+storeFile=/absolute/path/to/your.jks
+storePassword=...
+keyAlias=...
+keyPassword=...
+```
+
+Gradle picks it up automatically, and the file is git-ignored.
 
 Install it on a plugged-in phone with USB debugging on:
 

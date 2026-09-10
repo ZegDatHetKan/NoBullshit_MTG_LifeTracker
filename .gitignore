@@ -10,6 +10,8 @@ captures/
 .cxx/
 *.apk
 *.aab
+# ...except the release build we hand out, which is committed on purpose.
+!dist/*.apk
 *.keystore
 !debug.keystore
 .kotlin/
