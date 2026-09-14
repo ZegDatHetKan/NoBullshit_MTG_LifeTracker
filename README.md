@@ -1,10 +1,14 @@
 # Life Tracker
 
-A Magic: The Gathering life tracker for two players. It does the standard job every
-tracker on the store does — and nothing else.
+A Magic: The Gathering life tracker for two players or a four-player Commander table.
 
 No ads. No accounts. No analytics. No "premium" tier. No network permission, so it
 could not phone home even if it wanted to.
+
+<p align="center">
+  <img src="docs/screenshot-commander.png" width="30%" alt="Four-player Commander table at 40 life">
+  <img src="docs/screenshot-artwork.png" width="30%" alt="Independent card-art backgrounds in 1v1">
+</p>
 
 <p align="center">
   <img src="docs/screenshot-game.png" width="30%" alt="Two players, 14 and 17 life, one half rotated to face the opposite seat">
@@ -14,8 +18,9 @@ could not phone home even if it wanted to.
 
 ## What it does
 
-- **Two life totals**, one per half of the screen. The opponent's half is rotated 180°
-  so it reads the right way up from across the table.
+- **1v1 or four-player Commander**, selected in Settings. Commander starts four players
+  at 40 life in a 2×2 layout; 1v1 starts at 20. The upper panels rotate 180° to face
+  the opposite seats. Changing mode starts a new game and can be undone.
 - **Tap either side of your half** to change your life: left removes one, right adds one.
   The whole half is the button, so you are not aiming at a small target mid-combat.
 - **Hold to repeat**, accelerating — a twelve-point swing is one press, not twelve taps.
@@ -33,6 +38,10 @@ could not phone home even if it wanted to.
 - **New game** behind a confirmation that says exactly what it will clear.
 - **Starting life** 20, 40, 25, or anything you type.
 - **Names and colours** per player, in the five Magic colours plus multicolour.
+- **Ten card-art backgrounds for 1v1.** Tap a player name, choose an illustration and
+  adjust its intensity with a live preview, then Save. Each player chooses independently.
+  Solid colour is always available. Art is hidden in Commander and restored when returning
+  to 1v1. All images are bundled, so no download or permission is needed on the phone.
 - **Keeps the screen awake**, so the display never sleeps mid-turn.
 - **Survives being killed.** The game is saved as you play; force-quit and reopen mid-match
   and both totals, counters and history are exactly where you left them.
@@ -40,8 +49,8 @@ could not phone home even if it wanted to.
 
 ## Install it
 
-Download **[nobs-mtg-lifetracker-1.0.apk](https://github.com/ZegDatHetKan/NoBullshit_MTG_LifeTracker/raw/main/dist/nobs-mtg-lifetracker-1.0.apk)**
-(1.2 MB) straight onto your phone and tap it.
+Download **[nobs-mtg-lifetracker-1.1.apk](dist/nobs-mtg-lifetracker-1.1.apk)**
+(2.1 MB) straight onto your phone and tap it.
 
 Android will say it came from an unknown source, because it did not come from the Play
 Store. It asks once for permission to install from whatever app you downloaded it with —
@@ -60,7 +69,7 @@ The APK is signed with a key that never leaves the maintainer's machine, so any 
 carrying this signature was built from it:
 
 ```bash
-$ANDROID_HOME/build-tools/35.0.0/apksigner verify --print-certs nobs-mtg-lifetracker-1.0.apk
+$ANDROID_HOME/build-tools/35.0.0/apksigner verify --print-certs nobs-mtg-lifetracker-1.1.apk
 ```
 
 ```
@@ -71,7 +80,7 @@ Signer #1 certificate SHA-256 digest: 2ec276fc7eb62ddc4ccbf0b1e34ec11354615a0288
 And the file itself:
 
 ```
-SHA-256  c9e732ad2deae2c79a1d87ac579fbf11a10be6f5d5e2b9824c2853befd2e9b43
+SHA-256  82a9f71c53eb35de3e79d01b5399feabaa1a111fa8b584aae45e023e2b1adaef
 ```
 
 </details>
@@ -138,7 +147,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 Or open the folder in Android Studio and press Run.
 
 Minimum Android 8.0 (API 26). Portrait only — it is meant to lie flat on a table
-between two people.
+between players.
 
 ## How it is put together
 
@@ -149,7 +158,7 @@ model/GameState.kt     Immutable data classes; a game is one value.
 model/GameReducer.kt   Every rule, as pure functions. This is what the tests cover.
 data/GameRepository.kt DataStore persistence. Local, and the only storage there is.
 ui/GameViewModel.kt    Holds the state, the undo stack and the save debounce.
-ui/GameScreen.kt       Two opposed halves and the centre bar between them.
+ui/GameScreen.kt       Opposed halves or a 2×2 table, with shared centre controls.
 ui/PlayerPanel.kt      One player's half: tap zones, life, burst bubble, counters.
 ui/*Dialog.kt          History, dice, settings, new game, player name and colour.
 ```
@@ -165,4 +174,6 @@ game does and does not clear.
 
 ## Licence
 
-MIT — see [LICENSE](LICENSE).
+Source code: MIT — see [LICENSE](LICENSE). Card illustrations are not covered by the
+MIT licence; they belong to Wizards of the Coast and their respective artists.
+See [artwork credits and sources](docs/artwork.md).

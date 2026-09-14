@@ -2,10 +2,13 @@ package com.nobs.mtglifetracker.ui
 
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +18,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,11 +30,15 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.pointerInput
@@ -59,13 +65,14 @@ fun PlayerPanel(
     player: PlayerState,
     pendingDelta: Int?,
     rotated: Boolean,
+    compact: Boolean,
     haptics: Boolean,
     onLifeChange: (Int) -> Unit,
     onCounterChange: (CounterType, Int) -> Unit,
     onOpenPlayerMenu: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var showCounters by remember { mutableStateOf(false) }
+    var showCounters by remember(player.id) { mutableStateOf(false) }
     val palette = paletteFor(player.colorIndex)
     val background = if (LocalIsDark.current) palette.dark else palette.light
     // Defeat is signalled by draining the colour out of that half, not by blocking it.
@@ -76,13 +83,27 @@ fun PlayerPanel(
 
     Box(
         modifier
+            .clipToBounds()
             .background(background)
             .then(if (rotated) Modifier.rotate(180f) else Modifier),
     ) {
+        if (!compact) {
+            CardArtworks.find(player.artworkId)?.let { artwork ->
+                Image(
+                    painter = painterResource(artwork.resource),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    alpha = player.artworkOpacity.coerceIn(0.2f, 0.8f) * defeatFade,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.22f)))
+            }
+        }
         Box(Modifier.fillMaxSize().alpha(defeatFade)) {
             if (showCounters) {
                 CounterPanel(
                     player = player,
+                    compact = compact,
                     haptics = haptics,
                     onCounterChange = onCounterChange,
                     onClose = { showCounters = false },
@@ -91,6 +112,7 @@ fun PlayerPanel(
             } else {
                 LifeSurface(
                     player = player,
+                    compact = compact,
                     pendingDelta = pendingDelta,
                     haptics = haptics,
                     onLifeChange = onLifeChange,
@@ -105,6 +127,7 @@ fun PlayerPanel(
 @Composable
 private fun LifeSurface(
     player: PlayerState,
+    compact: Boolean,
     pendingDelta: Int?,
     haptics: Boolean,
     onLifeChange: (Int) -> Unit,
@@ -120,6 +143,7 @@ private fun LifeSurface(
         Row(Modifier.fillMaxSize()) {
             LifeTapZone(
                 glyph = "−",
+                compact = compact,
                 alignment = Alignment.CenterStart,
                 description = "Lose one life, ${player.name}",
                 haptics = haptics,
@@ -127,6 +151,7 @@ private fun LifeSurface(
             )
             LifeTapZone(
                 glyph = "+",
+                compact = compact,
                 alignment = Alignment.CenterEnd,
                 description = "Gain one life, ${player.name}",
                 haptics = haptics,
@@ -141,12 +166,14 @@ private fun LifeSurface(
         ) {
             Text(
                 text = player.name.uppercase(),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.White.copy(alpha = 0.72f),
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .clip(RoundedCornerShape(6.dp))
-                    .clickable(onClickLabel = "Rename or recolour ${player.name}") {
+                    .clickable(onClickLabel = "Customize ${player.name}") {
                         onOpenPlayerMenu()
                     }
                     .padding(horizontal = 14.dp, vertical = 8.dp),
@@ -154,44 +181,32 @@ private fun LifeSurface(
 
             Spacer(Modifier.weight(1f))
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Spacer(Modifier.width(BUBBLE_SLOT))
+            Box(contentAlignment = Alignment.Center) {
+                var lifeSize by remember(player.life, compact) {
+                    mutableFloatStateOf(if (compact) 68f else 100f)
+                }
                 Text(
                     text = player.life.toString(),
-                    fontSize = if (kotlin.math.abs(player.life) >= 100) 76.sp else 100.sp,
+                    fontSize = lifeSize.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
-                    modifier = Modifier.semantics {
-                        contentDescription = "${player.name}, ${player.life} life"
-                    },
+                    maxLines = 1,
+                    softWrap = false,
+                    onTextLayout = { if (it.didOverflowWidth && lifeSize > 24f) lifeSize -= 4f },
+                    modifier = Modifier.padding(horizontal = if (compact) 16.dp else 56.dp)
+                        .semantics { contentDescription = "${player.name}, ${player.life} life" },
                 )
-                // The running total of the current burst, so you can see "-5" land as one hit.
-                Box(Modifier.width(BUBBLE_SLOT), contentAlignment = Alignment.CenterStart) {
-                    val shown = pendingDelta != null
-                    val bubbleAlpha by animateFloatAsState(
-                        targetValue = if (shown) 1f else 0f,
-                        label = "bubbleAlpha",
-                    )
-                    val bubbleScale by animateFloatAsState(
-                        targetValue = if (shown) 1f else 0.7f,
-                        label = "bubbleScale",
-                    )
-                    if (bubbleAlpha > 0.01f) {
-                        Text(
-                            text = lastDelta?.let { if (it > 0) "+$it" else "$it" }.orEmpty(),
-                            fontSize = 26.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            modifier = Modifier
-                                .padding(start = 8.dp)
-                                .graphicsLayer {
-                                    alpha = bubbleAlpha
-                                    scaleX = bubbleScale
-                                    scaleY = bubbleScale
-                                },
-                        )
-                    }
-                }
+                val bubbleAlpha by animateFloatAsState(
+                    targetValue = if (pendingDelta != null) 1f else 0f,
+                    label = "bubbleAlpha",
+                )
+                Text(
+                    text = lastDelta?.let { if (it > 0) "+$it" else "$it" }.orEmpty(),
+                    fontSize = if (compact) 20.sp else 26.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier.align(Alignment.BottomEnd).alpha(bubbleAlpha),
+                )
             }
 
             Spacer(Modifier.weight(1f))
@@ -230,6 +245,7 @@ private fun LifeSurface(
 @Composable
 private fun RowScope.LifeTapZone(
     glyph: String,
+    compact: Boolean,
     alignment: Alignment,
     description: String,
     haptics: Boolean,
@@ -283,10 +299,10 @@ private fun RowScope.LifeTapZone(
     ) {
         Text(
             text = glyph,
-            fontSize = 40.sp,
+            fontSize = if (compact) 28.sp else 40.sp,
             fontWeight = FontWeight.Light,
             color = Color.White.copy(alpha = 0.5f),
-            modifier = Modifier.padding(horizontal = 24.dp),
+            modifier = Modifier.padding(horizontal = if (compact) 8.dp else 24.dp),
         )
     }
 }
@@ -305,12 +321,13 @@ private suspend fun AwaitPointerEventScope.awaitRelease(pointer: PointerId) {
 }
 
 /** Active counters at a glance, plus the way into the full counter editor. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun CounterStrip(player: PlayerState, onOpenCounters: () -> Unit) {
     val active = CounterType.entries.filter { player.counter(it) > 0 }
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         active.forEach { type ->
             val value = player.counter(type)
@@ -342,7 +359,6 @@ private fun CounterStrip(player: PlayerState, onOpenCounters: () -> Unit) {
     }
 }
 
-private val BUBBLE_SLOT = 64.dp
 
 private const val HOLD_BEFORE_REPEAT_MS = 420L
 private const val REPEAT_START_MS = 130L

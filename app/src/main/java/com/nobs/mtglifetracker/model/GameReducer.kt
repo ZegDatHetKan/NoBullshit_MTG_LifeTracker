@@ -19,16 +19,23 @@ object GameReducer {
         startingLife: Int,
         previous: GameState? = null,
         now: Long = 0L,
+        playerCount: Int = previous?.players?.size ?: 2,
     ): GameState {
-        // Names and colours are part of the table setup, not the game, so they survive a reset.
-        val names = previous?.players?.map { it.name } ?: listOf("Player 1", "Player 2")
-        val colors = previous?.players?.map { it.colorIndex } ?: listOf(3, 1)
+        require(playerCount == 2 || playerCount == 4)
+        val colors = listOf(3, 1, 4, 2)
         return GameState(
             startingLife = startingLife,
-            players = listOf(
-                PlayerState(id = 0, name = names[0], life = startingLife, colorIndex = colors[0]),
-                PlayerState(id = 1, name = names[1], life = startingLife, colorIndex = colors[1]),
-            ),
+            players = List(playerCount) { id ->
+                val old = previous?.players?.firstOrNull { it.id == id }
+                PlayerState(
+                    id = id,
+                    name = old?.name ?: "Player ${id + 1}",
+                    life = startingLife,
+                    colorIndex = old?.colorIndex ?: colors[id],
+                    artworkId = old?.artworkId,
+                    artworkOpacity = old?.artworkOpacity ?: 0.55f,
+                )
+            },
             history = emptyList(),
             startedAt = now,
         )
@@ -78,6 +85,11 @@ object GameReducer {
 
     fun setColor(state: GameState, playerId: Int, colorIndex: Int): GameState =
         state.mapPlayer(playerId) { it.copy(colorIndex = colorIndex) }
+
+    fun setArtwork(state: GameState, playerId: Int, artworkId: String?, opacity: Float): GameState =
+        state.mapPlayer(playerId) {
+            it.copy(artworkId = artworkId, artworkOpacity = opacity.coerceIn(0.2f, 0.8f))
+        }
 
     private fun GameState.mapPlayer(playerId: Int, block: (PlayerState) -> PlayerState) =
         copy(players = players.map { if (it.id == playerId) block(it) else it })

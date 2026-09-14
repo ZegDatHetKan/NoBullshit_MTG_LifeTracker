@@ -1,13 +1,15 @@
 package com.nobs.mtglifetracker.ui
 
 import android.view.HapticFeedbackConstants
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -39,13 +41,14 @@ import com.nobs.mtglifetracker.model.PlayerState
 @Composable
 fun CounterPanel(
     player: PlayerState,
+    compact: Boolean,
     haptics: Boolean,
     onCounterChange: (CounterType, Int) -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+        modifier.padding(horizontal = if (compact) 6.dp else 12.dp, vertical = 8.dp).verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Row(
@@ -81,7 +84,8 @@ fun CounterPanel(
                 value = player.counter(type),
                 haptics = haptics,
                 onChange = { onCounterChange(type, it) },
-                modifier = Modifier.weight(1f),
+                compact = compact,
+                modifier = Modifier.heightIn(min = if (compact) 76.dp else 62.dp),
             )
         }
     }
@@ -90,46 +94,42 @@ fun CounterPanel(
 @Composable
 private fun CounterRow(
     type: CounterType,
+    compact: Boolean,
     value: Int,
     haptics: Boolean,
     onChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val lethal = type.losesAt?.let { value >= it } == true
-    Row(
-        modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(
-                if (lethal) Color.Black.copy(alpha = 0.34f) else Color.White.copy(alpha = 0.10f),
-            )
-            .padding(horizontal = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    Column(
+        modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
+            .background(if (lethal) Color.Black.copy(alpha = 0.34f) else Color.White.copy(alpha = 0.10f))
+            .padding(horizontal = 4.dp, vertical = 4.dp),
     ) {
-        Column(Modifier.weight(1f).padding(start = 8.dp)) {
-            Text(
-                text = type.label,
-                style = MaterialTheme.typography.labelLarge,
-                color = Color.White,
-            )
-            type.losesAt?.let { limit ->
-                Text(
-                    text = "$limit to lose",
-                    fontSize = 10.sp,
-                    color = Color.White.copy(alpha = 0.6f),
-                )
-            }
+        if (compact) {
+            Text(type.label, color = Color.White, style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(start = 6.dp))
         }
-        StepButton("−", "Remove one ${type.label} counter", haptics) { onChange(-1) }
-        Text(
-            text = value.toString(),
-            fontSize = 26.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.width(46.dp),
-        )
-        StepButton("+", "Add one ${type.label} counter", haptics) { onChange(1) }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (!compact) {
+                Column(Modifier.weight(1f).padding(start = 8.dp)) {
+                    Text(type.label, color = Color.White, style = MaterialTheme.typography.labelLarge)
+                    type.losesAt?.let { Text("$it to lose", fontSize = 10.sp,
+                        color = Color.White.copy(alpha = 0.6f)) }
+                }
+            }
+            StepButton("−", "Remove one ${type.label} counter", haptics) { onChange(-1) }
+            Text(
+                text = value.toString(),
+                fontSize = if (compact) 22.sp else 26.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                modifier = if (compact) Modifier.weight(1f) else Modifier.width(46.dp),
+            )
+            StepButton("+", "Add one ${type.label} counter", haptics) { onChange(1) }
+        }
     }
 }
 

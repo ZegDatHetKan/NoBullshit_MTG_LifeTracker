@@ -27,6 +27,8 @@ data class PlayerState(
     val life: Int,
     val colorIndex: Int,
     val counters: Map<CounterType, Int> = emptyMap(),
+    val artworkId: String? = null,
+    val artworkOpacity: Float = 0.55f,
 ) {
     fun counter(type: CounterType): Int = counters[type] ?: 0
 
@@ -81,9 +83,16 @@ data class GameState(
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
 @Serializable
+enum class GameMode(val label: String, val playerCount: Int, val startingLife: Int) {
+    DUEL("1v1", 2, 20),
+    COMMANDER("Commander · 4", 4, 40),
+}
+
+@Serializable
 data class Settings(
     val startingLife: Int = GameState.DEFAULT_STARTING_LIFE,
     val keepScreenOn: Boolean = true,
     val haptics: Boolean = true,
     val theme: ThemeMode = ThemeMode.DARK,
+    val gameMode: GameMode = GameMode.DUEL,
 )

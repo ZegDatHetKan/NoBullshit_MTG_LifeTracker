@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,6 +23,7 @@ import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.key
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -51,8 +53,7 @@ fun GameScreen(viewModel: GameViewModel) {
     val ui by viewModel.state.collectAsState()
     var dialog by remember { mutableStateOf<Dialog?>(null) }
 
-    val top = ui.game.players[1]
-    val bottom = ui.game.players[0]
+    val fourPlayers = ui.game.players.size == 4
 
     Column(
         Modifier
@@ -60,15 +61,13 @@ fun GameScreen(viewModel: GameViewModel) {
             .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
-        // The opponent's half is flipped so it reads correctly from across the table.
-        PlayerPanel(
-            player = top,
-            pendingDelta = ui.pendingDeltas[top.id],
+        PlayerRow(
+            ids = if (fourPlayers) listOf(2, 3) else listOf(1),
+            ui = ui,
+            viewModel = viewModel,
             rotated = true,
-            haptics = ui.settings.haptics,
-            onLifeChange = { viewModel.changeLife(top.id, it) },
-            onCounterChange = { type, delta -> viewModel.changeCounter(top.id, type, delta) },
-            onOpenPlayerMenu = { dialog = Dialog.PlayerMenu(top.id) },
+            compact = fourPlayers,
+            onPlayerMenu = { dialog = Dialog.PlayerMenu(it) },
             modifier = Modifier.weight(1f).fillMaxWidth(),
         )
 
@@ -81,14 +80,13 @@ fun GameScreen(viewModel: GameViewModel) {
             onSettings = { dialog = Dialog.Settings },
         )
 
-        PlayerPanel(
-            player = bottom,
-            pendingDelta = ui.pendingDeltas[bottom.id],
+        PlayerRow(
+            ids = if (fourPlayers) listOf(0, 1) else listOf(0),
+            ui = ui,
+            viewModel = viewModel,
             rotated = false,
-            haptics = ui.settings.haptics,
-            onLifeChange = { viewModel.changeLife(bottom.id, it) },
-            onCounterChange = { type, delta -> viewModel.changeCounter(bottom.id, type, delta) },
-            onOpenPlayerMenu = { dialog = Dialog.PlayerMenu(bottom.id) },
+            compact = fourPlayers,
+            onPlayerMenu = { dialog = Dialog.PlayerMenu(it) },
             modifier = Modifier.weight(1f).fillMaxWidth(),
         )
     }
@@ -106,6 +104,7 @@ fun GameScreen(viewModel: GameViewModel) {
         Dialog.Settings -> SettingsDialog(
             settings = ui.settings,
             onStartingLife = viewModel::setStartingLife,
+            onGameMode = viewModel::setGameMode,
             onTheme = viewModel::setTheme,
             onKeepScreenOn = { on -> viewModel.updateSettings { it.copy(keepScreenOn = on) } },
             onHaptics = { on -> viewModel.updateSettings { it.copy(haptics = on) } },
@@ -113,6 +112,7 @@ fun GameScreen(viewModel: GameViewModel) {
         )
         Dialog.ConfirmReset -> ConfirmResetDialog(
             startingLife = ui.settings.startingLife,
+            playerCount = ui.settings.gameMode.playerCount,
             onConfirm = {
                 viewModel.resetGame()
                 dialog = null
@@ -123,8 +123,39 @@ fun GameScreen(viewModel: GameViewModel) {
             player = ui.game.player(open.playerId),
             onRename = { viewModel.rename(open.playerId, it) },
             onColor = { viewModel.setColor(open.playerId, it) },
+            allowArtwork = !fourPlayers,
+            onArtwork = { artwork, opacity -> viewModel.setArtwork(open.playerId, artwork, opacity) },
             onDismiss = { dialog = null },
         )
+    }
+}
+
+@Composable
+private fun PlayerRow(
+    ids: List<Int>,
+    ui: UiState,
+    viewModel: GameViewModel,
+    rotated: Boolean,
+    compact: Boolean,
+    onPlayerMenu: (Int) -> Unit,
+    modifier: Modifier,
+) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+        ids.forEach { id ->
+            key(id, compact) {
+                PlayerPanel(
+                    player = ui.game.player(id),
+                    pendingDelta = ui.pendingDeltas[id],
+                    rotated = rotated,
+                    compact = compact,
+                    haptics = ui.settings.haptics,
+                    onLifeChange = { viewModel.changeLife(id, it) },
+                    onCounterChange = { type, delta -> viewModel.changeCounter(id, type, delta) },
+                    onOpenPlayerMenu = { onPlayerMenu(id) },
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                )
+            }
+        }
     }
 }
 

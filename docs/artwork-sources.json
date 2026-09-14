@@ -1,0 +1,122 @@
+[
+  {
+    "id": "juzam_djinn",
+    "name": "Juzám Djinn",
+    "artist": "Mark Tedin",
+    "set": "arn",
+    "collector_number": "29",
+    "source": "https://scryfall.com/card/arn/29/juz%C3%A1m-djinn?utm_source=api",
+    "download": "https://cards.scryfall.io/art_crop/front/3/1/31bf3f14-b5df-498b-a1bb-965885c82401.jpg?1783948387",
+    "width": 582,
+    "height": 467,
+    "highres_image": true
+  },
+  {
+    "id": "ancestral_recall",
+    "name": "Ancestral Recall",
+    "artist": "Ryan Pancoast",
+    "set": "vma",
+    "collector_number": "1",
+    "source": "https://scryfall.com/card/vma/1/ancestral-recall?utm_source=api",
+    "download": "https://cards.scryfall.io/art_crop/front/2/3/2398892d-28e9-4009-81ec-0d544af79d2b.jpg?1783939333",
+    "width": 626,
+    "height": 457,
+    "highres_image": true
+  },
+  {
+    "id": "intuition",
+    "name": "Intuition",
+    "artist": "April Lee",
+    "set": "tmp",
+    "collector_number": "70",
+    "source": "https://scryfall.com/card/tmp/70/intuition?utm_source=api",
+    "download": "https://cards.scryfall.io/art_crop/front/c/9/c99f6785-e5a1-4fdc-9fb5-e1a372e7e848.jpg?1783946654",
+    "width": 571,
+    "height": 460,
+    "highres_image": true
+  },
+  {
+    "id": "survival_of_the_fittest",
+    "name": "Survival of the Fittest",
+    "artist": "Pete Venters",
+    "set": "exo",
+    "collector_number": "129",
+    "source": "https://scryfall.com/card/exo/129/survival-of-the-fittest?utm_source=api",
+    "download": "https://cards.scryfall.io/art_crop/front/c/0/c060c178-3c0e-493f-b6f0-ead5b1d6f191.jpg?1783946500",
+    "width": 571,
+    "height": 460,
+    "highres_image": true
+  },
+  {
+    "id": "squee_goblin_nabob",
+    "name": "Squee, Goblin Nabob",
+    "artist": "David Monette",
+    "set": "mmq",
+    "collector_number": "214",
+    "source": "https://scryfall.com/card/mmq/214/squee-goblin-nabob?utm_source=api",
+    "download": "https://cards.scryfall.io/art_crop/front/4/b/4ba8325a-1203-4125-9111-94d9e2b1f14b.jpg?1783945933",
+    "width": 571,
+    "height": 460,
+    "highres_image": true
+  },
+  {
+    "id": "black_lotus",
+    "name": "Black Lotus",
+    "artist": "Chris Rahn",
+    "set": "vma",
+    "collector_number": "4",
+    "source": "https://scryfall.com/card/vma/4/black-lotus?utm_source=api",
+    "download": "https://cards.scryfall.io/art_crop/front/b/d/bd8fa327-dd41-4737-8f19-2cf5eb1f7cdd.jpg?1783939332",
+    "width": 626,
+    "height": 457,
+    "highres_image": true
+  },
+  {
+    "id": "birds_of_paradise",
+    "name": "Birds of Paradise",
+    "artist": "Marcelo Vignali",
+    "set": "rav",
+    "collector_number": "153",
+    "source": "https://scryfall.com/card/rav/153/birds-of-paradise?utm_source=api",
+    "download": "https://cards.scryfall.io/art_crop/front/9/0/90a4396a-0f22-482b-ad1d-4d9b68a1ed96.jpg?1783943642",
+    "width": 616,
+    "height": 452,
+    "highres_image": true
+  },
+  {
+    "id": "lightning_bolt",
+    "name": "Lightning Bolt",
+    "artist": "Christopher Moeller",
+    "set": "m11",
+    "collector_number": "149",
+    "source": "https://scryfall.com/card/m11/149/lightning-bolt?utm_source=api",
+    "download": "https://cards.scryfall.io/art_crop/front/e/7/e768c957-3a1f-42f5-853a-96942f645df5.jpg?1783941805",
+    "width": 616,
+    "height": 452,
+    "highres_image": true
+  },
+  {
+    "id": "serra_angel",
+    "name": "Serra Angel",
+    "artist": "Greg Staples",
+    "set": "9ed",
+    "collector_number": "43",
+    "source": "https://scryfall.com/card/9ed/43/serra-angel?utm_source=api",
+    "download": "https://cards.scryfall.io/art_crop/front/7/1/71567cb0-f4f3-4e86-a9d3-c207119a3185.jpg?1783944083",
+    "width": 616,
+    "height": 452,
+    "highres_image": true
+  },
+  {
+    "id": "necropotence",
+    "name": "Necropotence",
+    "artist": "Dave Kendall",
+    "set": "ima",
+    "collector_number": "98",
+    "source": "https://scryfall.com/card/ima/98/necropotence?utm_source=api",
+    "download": "https://cards.scryfall.io/art_crop/front/c/8/c89c6895-b0f8-444a-9c89-c6b4fd027b3e.jpg?1783935537",
+    "width": 626,
+    "height": 457,
+    "highres_image": true
+  }
+]

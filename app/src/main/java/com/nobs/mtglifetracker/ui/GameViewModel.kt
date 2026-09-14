@@ -7,6 +7,7 @@ import com.nobs.mtglifetracker.data.GameRepository
 import com.nobs.mtglifetracker.model.CounterType
 import com.nobs.mtglifetracker.model.GameReducer
 import com.nobs.mtglifetracker.model.GameState
+import com.nobs.mtglifetracker.model.GameMode
 import com.nobs.mtglifetracker.model.Settings
 import com.nobs.mtglifetracker.model.ThemeMode
 import kotlinx.coroutines.Job
@@ -46,7 +47,8 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
             val settings = repository.settings.first()
             val saved = repository.game.first()
             _state.value = UiState(
-                game = saved ?: GameReducer.newGame(settings.startingLife, now = now()),
+                game = saved ?: GameReducer.newGame(settings.startingLife, now = now(),
+                    playerCount = settings.gameMode.playerCount),
                 settings = settings,
                 loaded = true,
             )
@@ -70,16 +72,31 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         GameReducer.setColor(it, playerId, colorIndex)
     }
 
+    fun setArtwork(playerId: Int, artworkId: String?, opacity: Float) = mutate(track = false) {
+        GameReducer.setArtwork(it, playerId, artworkId, opacity)
+    }
+
+    fun setGameMode(mode: GameMode) {
+        if (mode.playerCount == _state.value.game.players.size) return
+        updateSettings { it.copy(gameMode = mode, startingLife = mode.startingLife) }
+        resetGame()
+    }
+
     fun resetGame() {
         val current = _state.value
         undoStack.addLast(current.game)
         trimUndo()
-        updateGame(GameReducer.newGame(current.settings.startingLife, current.game, now()))
+        updateGame(GameReducer.newGame(current.settings.startingLife, current.game, now(),
+            playerCount = current.settings.gameMode.playerCount))
         clearBubbles()
     }
 
     fun undo() {
         val previous = undoStack.removeLastOrNull() ?: return
+        updateSettings { it.copy(
+            gameMode = if (previous.players.size == 4) GameMode.COMMANDER else GameMode.DUEL,
+            startingLife = previous.startingLife,
+        ) }
         updateGame(previous)
         clearBubbles()
     }
